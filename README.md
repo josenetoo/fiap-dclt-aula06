@@ -29,15 +29,14 @@ fiap-dclt-aula06/
 ├── README.md                           # Este arquivo
 ├── VIDEO-6.1-PASSO-A-PASSO.md         # Vídeo 1: Build e Deploy
 ├── VIDEO-6.2-PASSO-A-PASSO.md         # Vídeo 2: Deploy Multi-Ambiente
-├── AWS-LEARNER-LAB-LIMITACOES.md      # Limitações AWS Learner Lab
 ├── template.yaml                       # SAM template (Lambda + API Gateway)
 ├── samconfig.toml                      # Configurações multi-ambiente
 ├── src/
 │   ├── handlers.py                     # Funções Lambda (hello, health, info)
 │   └── requirements.txt                # Dependências Python
-└── .github/
-    └── workflows/
-        └── sam-pipeline.yml            # Pipeline CI/CD
+└── .github/workflows/
+    ├── sam-pipeline.yml                # Pipeline simples (Vídeo 6.1)
+    └── sam-pipeline-multi-env.yml      # Pipeline multi-ambiente (Vídeo 6.2)
 ```
 
 ---

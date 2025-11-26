@@ -32,7 +32,8 @@ fiap-dclt-aula06/
 ├── src/
 │   └── handlers.py
 └── .github/workflows/
-    └── sam-pipeline.yml   # ← Vamos atualizar para multi-ambiente
+    ├── sam-pipeline.yml           # Pipeline simples (Vídeo 6.1)
+    └── sam-pipeline-multi-env.yml # ← Vamos criar este
 ```
 
 ---
@@ -77,11 +78,11 @@ sam deploy --config-env production
 
 ## 🚀 Parte 2: Pipeline Multi-Ambiente
 
-### Passo 3: Atualizar workflow para multi-ambiente
+### Passo 3: Criar workflow multi-ambiente
 
 **Linux/Mac:**
 ```bash
-cat > .github/workflows/sam-pipeline.yml << 'EOF'
+cat > .github/workflows/sam-pipeline-multi-env.yml << 'EOF'
 name: 🚀 SAM Multi-Environment Pipeline
 
 on:
@@ -94,11 +95,12 @@ env:
 
 jobs:
   # ========================================
-  # JOB 1: Build
+  # JOB 1: Deploy Staging
   # ========================================
-  build:
-    name: 🔨 Build
+  deploy-staging:
+    name: 🧪 Deploy Staging
     runs-on: ubuntu-latest
+    environment: staging
     
     steps:
       - uses: actions/checkout@v4
@@ -109,38 +111,15 @@ jobs:
       
       - uses: aws-actions/setup-sam@v2
       
-      - name: 🔨 SAM Build
-        run: sam build
-      
-      - uses: actions/upload-artifact@v4
-        with:
-          name: sam-build
-          path: .aws-sam/
-
-  # ========================================
-  # JOB 2: Deploy Staging
-  # ========================================
-  deploy-staging:
-    name: 🧪 Deploy Staging
-    runs-on: ubuntu-latest
-    needs: build
-    environment: staging
-    
-    steps:
-      - uses: actions/checkout@v4
-      - uses: aws-actions/setup-sam@v2
-      
-      - uses: actions/download-artifact@v4
-        with:
-          name: sam-build
-          path: .aws-sam/
-      
       - uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
           aws-region: ${{ env.AWS_REGION }}
+      
+      - name: 🔨 SAM Build
+        run: sam build
       
       - name: 🧪 Deploy Staging
         run: |
@@ -155,7 +134,7 @@ jobs:
             --query 'Stacks[0].Outputs' --output table
 
   # ========================================
-  # JOB 3: Deploy Production
+  # JOB 2: Deploy Production
   # ========================================
   deploy-production:
     name: 🏭 Deploy Production
@@ -165,12 +144,12 @@ jobs:
     
     steps:
       - uses: actions/checkout@v4
-      - uses: aws-actions/setup-sam@v2
       
-      - uses: actions/download-artifact@v4
+      - uses: actions/setup-python@v5
         with:
-          name: sam-build
-          path: .aws-sam/
+          python-version: '3.9'
+      
+      - uses: aws-actions/setup-sam@v2
       
       - uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -178,6 +157,9 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
           aws-region: ${{ env.AWS_REGION }}
+      
+      - name: 🔨 SAM Build
+        run: sam build
       
       - name: 🏭 Deploy Production
         run: |
@@ -208,11 +190,12 @@ env:
 
 jobs:
   # ========================================
-  # JOB 1: Build
+  # JOB 1: Deploy Staging
   # ========================================
-  build:
-    name: 🔨 Build
+  deploy-staging:
+    name: 🧪 Deploy Staging
     runs-on: ubuntu-latest
+    environment: staging
     
     steps:
       - uses: actions/checkout@v4
@@ -223,38 +206,15 @@ jobs:
       
       - uses: aws-actions/setup-sam@v2
       
-      - name: 🔨 SAM Build
-        run: sam build
-      
-      - uses: actions/upload-artifact@v4
-        with:
-          name: sam-build
-          path: .aws-sam/
-
-  # ========================================
-  # JOB 2: Deploy Staging
-  # ========================================
-  deploy-staging:
-    name: 🧪 Deploy Staging
-    runs-on: ubuntu-latest
-    needs: build
-    environment: staging
-    
-    steps:
-      - uses: actions/checkout@v4
-      - uses: aws-actions/setup-sam@v2
-      
-      - uses: actions/download-artifact@v4
-        with:
-          name: sam-build
-          path: .aws-sam/
-      
       - uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: `${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: `${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-session-token: `${{ secrets.AWS_SESSION_TOKEN }}
           aws-region: `${{ env.AWS_REGION }}
+      
+      - name: 🔨 SAM Build
+        run: sam build
       
       - name: 🧪 Deploy Staging
         run: sam deploy --config-env staging --no-confirm-changeset --no-fail-on-empty-changeset
@@ -263,7 +223,7 @@ jobs:
         run: aws cloudformation describe-stacks --stack-name fiap-serverless-staging --query 'Stacks[0].Outputs' --output table
 
   # ========================================
-  # JOB 3: Deploy Production
+  # JOB 2: Deploy Production
   # ========================================
   deploy-production:
     name: 🏭 Deploy Production
@@ -273,12 +233,12 @@ jobs:
     
     steps:
       - uses: actions/checkout@v4
-      - uses: aws-actions/setup-sam@v2
       
-      - uses: actions/download-artifact@v4
+      - uses: actions/setup-python@v5
         with:
-          name: sam-build
-          path: .aws-sam/
+          python-version: '3.9'
+      
+      - uses: aws-actions/setup-sam@v2
       
       - uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -287,12 +247,15 @@ jobs:
           aws-session-token: `${{ secrets.AWS_SESSION_TOKEN }}
           aws-region: `${{ env.AWS_REGION }}
       
+      - name: 🔨 SAM Build
+        run: sam build
+      
       - name: 🏭 Deploy Production
         run: sam deploy --config-env production --no-confirm-changeset --no-fail-on-empty-changeset
       
       - name: 📋 URL Production
         run: aws cloudformation describe-stacks --stack-name fiap-serverless-prod --query 'Stacks[0].Outputs' --output table
-"@ | Out-File -FilePath ".github\workflows\sam-pipeline.yml" -Encoding UTF8
+"@ | Out-File -FilePath ".github\workflows\sam-pipeline-multi-env.yml" -Encoding UTF8
 ```
 
 ---
@@ -396,12 +359,10 @@ Se não tiver, volte ao **Vídeo 6.1, Passos 3-4** para criar.
 
 ```mermaid
 graph TB
-    Push[git push main] --> Build[🔨 Build]
-    Build --> Staging[🧪 Deploy Staging]
+    Push[git push main] --> Staging[🧪 Deploy Staging]
     Staging --> Approval[👤 Aguarda Aprovação]
     Approval --> Prod[🏭 Deploy Production]
     
-    style Build fill:#ff9900
     style Staging fill:#f39c12
     style Approval fill:#9b59b6
     style Prod fill:#2ecc71
@@ -414,7 +375,7 @@ graph TB
 ### Passo 7: Commit e Push
 
 ```bash
-git add .github/workflows/sam-pipeline.yml
+git add .github/workflows/sam-pipeline-multi-env.yml
 git commit -m "ci: add multi-environment pipeline"
 git push origin main
 ```
@@ -424,7 +385,6 @@ git push origin main
 1. Vá para **Actions** no repositório
 2. Clique no workflow **SAM Multi-Environment Pipeline**
 3. Acompanhe os jobs:
-   - ✅ Build (automático)
    - ✅ Deploy Staging (automático)
    - ⏳ Deploy Production (aguardando aprovação)
 
@@ -432,7 +392,6 @@ git push origin main
 ┌─────────────────────────────────────────────────────┐
 │ SAM Multi-Environment Pipeline                       │
 ├─────────────────────────────────────────────────────┤
-│ ✅ Build                    Completed               │
 │ ✅ Deploy Staging           Completed               │
 │ ⏳ Deploy Production        Waiting for approval    │
 └─────────────────────────────────────────────────────┘
